@@ -1,0 +1,31 @@
+## template: jinja
+#cloud-config
+# yamllint disable rule:document-start rule:line-length
+write_files:
+  - path: /usr/local/sbin/setup.sh
+    permissions: 0750
+    owner: root
+    content: |
+      #!/bin/sh
+      # Force default gw through second nic
+      route del default
+      route add default gw ${control_gw} metric 0 $(ip link show | awk -F: '/ens/ {print $2}' | tr -d ' '| sort -r | head -n1)
+      apt update
+      apt install -y nginx
+      systemctl daemon-reload
+      systemctl restart nginx
+  - path: /var/www/html/index.html
+    permissions: 0644
+    owner: root
+    content: |
+      <html>
+        <head>
+          <title>Webapp</title>
+        </head>
+        <body>
+          <h1>This webapp is running on {{ v1.local_hostname }}.</h1>
+        </body>
+      </html>
+
+runcmd:
+  - /usr/local/sbin/setup.sh

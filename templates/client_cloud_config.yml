@@ -1,0 +1,27 @@
+#cloud-config
+# yamllint disable rule:document-start rule:line-length
+write_files:
+  - path: /etc/nginx/sites-enabled/default
+    permissions: 0644
+    owner: root
+    content: |
+      upstream backend {
+%{ for i in range(0, pow(2, 32 - tonumber(replace(bigip_vip, "/^.*\\//", "")))) ~}
+        server ${cidrhost(bigip_vip, i)}:80;
+%{ endfor ~}
+      }
+      server {
+        listen 80;
+        access_log /var/log/nginx/proxy-access.log;
+        error_log /var/log/nginx/proxy-error.log;
+        location / {
+          proxy_pass http://backend;
+        }
+      }
+
+packages:
+  - nginx
+
+runcmd:
+  - systemctl daemon-reload
+  - systemctl restart nginx

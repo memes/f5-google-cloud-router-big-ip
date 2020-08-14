@@ -1,0 +1,7 @@
+fileignoreconfig:
+- filename: .github/workflows/pre-commit.yml
+  checksum: 71fea73f97b2882cc899f729b9e9c2b79cd5a199aecdb9a28794e64d4fda859e
+- filename: templates/client_cloud_config.yml
+  checksum: e4d96bca47dea6734e4f98b43109ffdacd4509154afb6b482f54301e88547374
+- filename: main.tf
+  checksum: c66c55f8d1b9898cbfa86f4496b54a63393ff99bd1341bd96cc3e0be779cbc5a
