@@ -11,7 +11,6 @@
 | terraform | ~> 0.12 |
 | google | ~> 3.34 |
 | google | ~> 3.34 |
-| google-beta | ~> 3.34 |
 
 ## Providers
 

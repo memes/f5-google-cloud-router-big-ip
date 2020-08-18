@@ -1,8 +1,8 @@
 # This module makes use of service account impersonation to allow user accounts
 # to act as the project Terraform service account. This file defines the
-# initialisation of google and google-beta providers that are acting as the
-# named service account, assuming that the invoking user account has the
-# permissions to create an authentication token for the service account.
+# initialisation of google provider that are acting as the named service account,
+# assuming that the invoking user account has the permissions to create an
+# authentication token for the service account.
 #
 # Instantiate a google provider aliased as 'executor'. This provider will use
 # the calling user's credentials to authenticate to GCP APIs.
@@ -34,11 +34,6 @@ data "google_service_account_access_token" "sa_token" {
 # the target service account. This is the provider that will be used for
 # resource creation.
 provider "google" {
-  version      = "~> 3.34"
-  access_token = data.google_service_account_access_token.sa_token.access_token
-}
-
-provider "google-beta" {
   version      = "~> 3.34"
   access_token = data.google_service_account_access_token.sa_token.access_token
 }
