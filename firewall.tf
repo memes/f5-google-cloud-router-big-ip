@@ -17,7 +17,6 @@ resource "google_compute_firewall" "client_http" {
     protocol = "tcp"
     ports = [
       80,
-      22,
     ]
   }
 }
@@ -26,7 +25,7 @@ resource "google_compute_firewall" "client_http" {
 resource "google_compute_firewall" "bigip_ingress" {
   project     = var.project_id
   name        = format("%s-allow-client-bigip-ingress", var.nonce)
-  network     = data.google_compute_subnetwork.service.network
+  network     = data.google_compute_subnetwork.dmz.network
   description = format("Allow HTTP from client CIDR to BIG-IP (%s)", var.nonce)
   direction   = "INGRESS"
   source_ranges = [

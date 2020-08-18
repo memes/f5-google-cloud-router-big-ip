@@ -10,7 +10,7 @@
     "label": "poc",
     "poc": {
       "class": "Tenant",
-      "poc": {
+      "http": {
         "class": "Application",
         "template": "http",
         "serviceMain": {
@@ -22,6 +22,13 @@
           "profileHTTP": {
             "bigip": "/Common/http"
           }
+        },
+        "forward": {
+          "class": "Service_Forwarding",
+          "forwardingType": "ip",
+          "virtualPort": 80,
+          "virtualAddresses": ${jsonencode(servers)},
+          "snat": "auto"
         },
         "servers": {
           "class": "Pool",

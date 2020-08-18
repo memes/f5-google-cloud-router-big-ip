@@ -3,6 +3,20 @@
 This Terraform module creates a set of service accounts and foundational
 resources that would typically be provided by a Project Factory.
 
+* Client VPC
+  * Public egress routes deleted
+  * Private GCP API enabled
+* DMZ VPC
+  * Public egress routes deleted
+  * Private GCP API enabled
+* Service VPC
+  * Public egress routes deleted
+  * Private GCP API enabled
+* Control VPC
+  * Public egress routes present
+  * NAT gateway for public internet egress
+  * Bastion host with access to all instances attached to control-plane VPC
+
 <!-- markdownlint-disable no-inline-html -->
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
@@ -31,6 +45,8 @@ resources that would typically be provided by a Project Factory.
 | client\_network\_name\_template | The naming template for the upstream client network to create; default is '%s-client'. | `string` | `"%s-client"` | no |
 | control\_cidr | The CIDR to use for control-plane BIG-IP nics and bastion host. | `string` | `"192.168.0.0/24"` | no |
 | control\_network\_name\_template | The naming temaplte for the control-plane network to create; default is<br>'%s-control'. | `string` | `"%s-control"` | no |
+| dmz\_cidr | The CIDR to use for services subnet created in `zone`. Default is '172.18.0.0/16'. | `string` | `"172.18.0.0/16"` | no |
+| dmz\_network\_name\_template | The naming template for the services network to create; default is '%s-dmz'. | `string` | `"%s-dmz"` | no |
 | nat\_name\_template | The naming template for Cloud NAT and Router; default is '%s-control-nat'. | `string` | `"%s-control-nat"` | no |
 | nonce | The name of the upstream client network to create; default is 'client'. | `string` | n/a | yes |
 | project\_id | The existing project id that will host the resources. E.g.<br>project\_id = "example-project-id" | `string` | n/a | yes |
@@ -46,10 +62,12 @@ resources that would typically be provided by a Project Factory.
 | bastion\_name | The name of the bastion VM. |
 | bigip\_sa | The fully-qualified email address of BIG-IP service account. |
 | client\_network | The client network self-link. |
-| client\_sa | The fully-qualified email address of client service account. |
+| client\_sa | The fully-qualified email address of client dmz account. |
 | client\_subnet | The client subnet self-link. |
 | control\_network | The control network self-link. |
 | control\_subnet | The control subnet self-link. |
+| dmz\_network | The DMZ network self-link. |
+| dmz\_subnet | The DMZ subnet self-link. |
 | service\_network | The service network self-link. |
 | service\_sa | The fully-qualified email address of service service account. |
 | service\_subnet | The service subnet self-link. |

@@ -115,3 +115,19 @@ The zone to use for bastion VM. The subnets will be created in the region for
 this zone. Default is 'us-central1-f'.
 EOD
 }
+
+variable "dmz_network_name_template" {
+  type        = string
+  default     = "%s-dmz"
+  description = <<EOD
+The naming template for the services network to create; default is '%s-dmz'.
+EOD
+}
+
+variable "dmz_cidr" {
+  type        = string
+  default     = "172.18.0.0/16"
+  description = <<EOD
+The CIDR to use for services subnet created in `zone`. Default is '172.18.0.0/16'.
+EOD
+}

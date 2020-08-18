@@ -27,7 +27,7 @@
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | bigip\_image | The BIG-IP image to use; default is a v15.1.0.4 PAYG licensed GOOD/25MBps image. | `string` | `"projects/f5-7626-networks-public/global/images/f5-bigip-15-1-0-4-0-0-6-payg-good-25mbps-200618231522"` | no |
-| bigip\_vip | The IP address to set as the BIG-IP VIP. If left blank (default), a value will<br>be chosen from the `external_cidr` block. | `string` | `""` | no |
+| bigip\_vip | The IP address to set as the BIG-IP VIP. If left blank (default), a value will<br>be chosen from the `dmz_cidr` block. | `string` | `""` | no |
 | foundations\_tf\_state\_bucket | The name of a GCS bucket containing the Terraform state for foundational resources. | `string` | n/a | yes |
 | foundations\_tf\_state\_prefix | The prefix to the foundational Terraform state files. | `string` | n/a | yes |
 | nonce | A nonce to uniquely identify the resources created. | `string` | n/a | yes |

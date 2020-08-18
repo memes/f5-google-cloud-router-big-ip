@@ -74,6 +74,6 @@ variable "bigip_vip" {
   default     = ""
   description = <<EOD
 The IP address to set as the BIG-IP VIP. If left blank (default), a value will
-be chosen from the `external_cidr` block.
+be chosen from the `dmz_cidr` block.
 EOD
 }

@@ -8,7 +8,7 @@ EOD
 output "client_sa" {
   value       = module.service_accounts.emails["client"]
   description = <<EOD
-The fully-qualified email address of client service account.
+The fully-qualified email address of client dmz account.
 EOD
 }
 
@@ -65,5 +65,19 @@ output "control_subnet" {
   value       = lookup(lookup(module.control.subnets, format("%s/control", local.region), {}), "self_link", "")
   description = <<EOD
 The control subnet self-link.
+EOD
+}
+
+output "dmz_network" {
+  value       = module.dmz.network_self_link
+  description = <<EOD
+The DMZ network self-link.
+EOD
+}
+
+output "dmz_subnet" {
+  value       = lookup(lookup(module.dmz.subnets, format("%s/dmz", local.region), {}), "self_link", "")
+  description = <<EOD
+The DMZ subnet self-link.
 EOD
 }

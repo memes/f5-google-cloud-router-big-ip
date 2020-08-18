@@ -50,8 +50,24 @@ module "client" {
   ]
 }
 
-# This network represents the data-plane shared by BIG-IP and target service
-# VMs
+# This network represents the BIG-IP only data-plane (DMZ)
+module "dmz" {
+  source       = "terraform-google-modules/network/google"
+  version      = "2.5.0"
+  project_id   = var.project_id
+  network_name = format(var.dmz_network_name_template, var.nonce)
+  subnets = [
+    {
+      subnet_name                            = "dmz"
+      subnet_ip                              = var.dmz_cidr
+      subnet_region                          = local.region
+      delete_default_internet_gateway_routes = true
+      subnet_private_access                  = true
+    }
+  ]
+}
+
+# This network represents the data-plane for target service VMs
 module "service" {
   source       = "terraform-google-modules/network/google"
   version      = "2.5.0"
@@ -66,16 +82,6 @@ module "service" {
       subnet_private_access                  = true
     }
   ]
-  /*
-  routes = [
-    {
-      name = format("%s-proxy-bigip", var.nonce)
-      description = format("Force next-hop to BIG-IP VIP for server CIDR")
-      destination_range = cidrsubnet(var.service_cidr, 2, 3)
-      next_hop_ip = cidrhost(cidrsubnet(var.service_cidr, 2, 2), 0)
-    }
-  ]
-  */
 }
 
 # This represents the control/management network in a BIG-IP two NIC deployment

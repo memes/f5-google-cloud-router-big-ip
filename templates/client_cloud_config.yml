@@ -6,8 +6,8 @@ write_files:
     owner: root
     content: |
       upstream backend {
-%{ for i in range(0, pow(2, 32 - tonumber(replace(bigip_vip, "/^.*\\//", "")))) ~}
-        server ${cidrhost(bigip_vip, i)}:80;
+%{ for target in targets ~}
+        server ${target}:80;
 %{ endfor ~}
       }
       server {
