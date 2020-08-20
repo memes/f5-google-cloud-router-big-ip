@@ -1,6 +1,41 @@
 # Cloud Router and F5 BIG-IP
 
-![pre-commit](https://github.com/memes/f5-cloud-router-big-ip/workflows/pre-commit/badge.svg)
+![pre-commit](https://github.com/memes/f5-google-cloud-router-big-ip/workflows/pre-commit/badge.svg)
+
+This repo will emulate Cloud Router between VPCs to test using BIG-IP as the
+next-hop.
+
+![HLA](images/f5-google-cloud-router-big-ip.png)
+
+1. Client instance
+   * NGINX reverse-proxy configured to send all requests to backend instances in `172.17.0.0/16` network
+   * Public IP, with FW rules to allow ingress from public internet
+2. Service instances
+   * NGINX hosting a static web page
+   * No public IP, egress through `control` network only
+3. BIG-IP instance
+   * 3-NIC configuration, with interfaces in `dmz`, `control`, and `service`
+   * Virtual Server defined on VIP(s) with **Service instances** as pool members
+   * Forwarding rule defined on *external* interface (`dmz`)
+4. `client` and `dmz` networks are connected via HA VPN pair, with Cloud Router advertising routes
+   * *client* is advertising `172.16.0.0/16` to *dmz*
+   * *dmz* is advertising `172.18.0.0/16` to *client*
+   * *dmz* is advertising `172.17.0.0/16` with **next-hop as BIG-IP**
+
+## Setup
+
+1. Create the networking foundations
+   See [foundations](/foundations) module for example setup
+2. Create/modify the Terraform environment files with required [inputs](#inputs)
+3. Execute Terraform to create the BIG-IP instance and Route
+   **NOTE:** due to weak module dependencies, you may need to invoke this step as
+   in two parts so that the dependent address is known.
+
+   ```shell
+   terraform init -backend-config env/ENV/poc.config
+   terraform apply -var-file env/ENV/poc.tfvars -auto-approve -target module.bigip
+   terraform apply -var-file env/ENV/poc.tfvars -auto-approve
+   ```
 
 <!-- markdownlint-disable no-inline-html -->
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
