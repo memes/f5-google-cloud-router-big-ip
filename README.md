@@ -2,8 +2,10 @@
 
 ![pre-commit](https://github.com/memes/f5-google-cloud-router-big-ip/workflows/pre-commit/badge.svg)
 
-This repo will emulate Cloud Router between VPCs to test using BIG-IP as the
-next-hop.
+This repo links two multiple networks together in an approximation of
+[Dedicated Interconnect](https://cloud.google.com/network-connectivity/docs/interconnect/concepts/dedicated-overview),
+demonstrating how to use Routes and Cloud Router between
+VPCs to use BIG-IP as the next-hop gateway.
 
 ![HLA](images/f5-google-cloud-router-big-ip.png)
 
