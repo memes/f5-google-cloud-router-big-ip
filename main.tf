@@ -178,8 +178,7 @@ resource "google_secret_manager_secret_iam_member" "admin_password" {
 }
 
 module "bigip" {
-  #source = "git::https://github.com/memes/f5-google-terraform-modules//modules/big-ip/ha?ref=1.0.1"
-  source                 = "/Users/emes/projects/automation/f5-google-terraform-modules//modules/big-ip/instance"
+  source                 = "git::https://github.com/memes/f5-google-terraform-modules//modules/big-ip/instance?ref=1.0.1"
   project_id             = var.project_id
   num_instances          = var.num_bigips
   instance_name_template = format("%s-bigip-%%02d", var.nonce)
