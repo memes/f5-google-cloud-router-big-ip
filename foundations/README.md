@@ -17,6 +17,22 @@ resources that would typically be provided by a Project Factory.
   * NAT gateway for public internet egress
   * Bastion host with access to all instances attached to control-plane VPC
 
+## Setup
+
+1. Create/modify the Terraform environment files with required [inputs](#inputs)
+2. Execute Terraform to create foundational resources
+
+   ```shell
+   terraform init ../env/ENV/foundations.config
+   terraform apply ../env/ENV/foundations.tfvars -auto-approve
+   ```
+
+## Cleanup
+
+```shell
+terraform destroy -var-file ../env/ENV/foundations.tfvars -auto-approve
+```
+
 <!-- markdownlint-disable no-inline-html -->
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements

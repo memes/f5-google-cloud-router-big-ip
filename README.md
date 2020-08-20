@@ -27,7 +27,7 @@ VPCs to use BIG-IP as the next-hop gateway.
 ## Setup
 
 1. Create the networking foundations
-   See [foundations](/foundations) module for example setup
+   See [foundations](/foundations/#setup) module for example setup
 2. Create/modify the Terraform environment files with required [inputs](#inputs)
 3. Execute Terraform to create the BIG-IP instance and Route
    **NOTE:** due to weak module dependencies, you may need to invoke this step as
@@ -38,6 +38,16 @@ VPCs to use BIG-IP as the next-hop gateway.
    terraform apply -var-file env/ENV/poc.tfvars -auto-approve -target module.bigip
    terraform apply -var-file env/ENV/poc.tfvars -auto-approve
    ```
+
+## Clean up
+
+1. Destroy resources via Terraform
+
+   ```shell
+   terraform destroy -var-file env/ENV/poc.tfvars -auto-approve
+   ```
+
+2. Clean up [foundational resource](foundations/#cleanup)
 
 <!-- markdownlint-disable no-inline-html -->
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
