@@ -312,24 +312,11 @@ module "vpc" {
   version      = "~> 2.0.0"
   project_id   = var.project_id
   network_name = data.google_compute_subnetwork.dmz.network
-  routes = [
-    {
-      name              = format("%s-proxy-bigip0", var.nonce)
-      description       = format("Force next-hop to BIG-IP 0 for server CIDR")
-      destination_range = data.google_compute_subnetwork.service.ip_cidr_range
-      # Next hop is 1st entry in VIP CIDR
-      #next_hop_ip = cidrhost(local.bigip_vip, 0)
-      # Next hop is nic0 of first BIG-IP VM
-      next_hop_ip = google_compute_address.bigip[0].address
-    },
-    {
-      name              = format("%s-proxy-bigip1", var.nonce)
-      description       = format("Force next-hop to BIG-IP 1 for server CIDR")
-      destination_range = data.google_compute_subnetwork.service.ip_cidr_range
-      # Next hop is 1st entry in VIP CIDR
-      #next_hop_ip = cidrhost(local.bigip_vip, 0)
-      # Next hop is nic0 of second BIG-IP VM
-      next_hop_ip = google_compute_address.bigip[1].address
-    }
-  ]
+  routes = [for i, r in google_compute_address.bigip : {
+    name              = format("%s-proxy-bigip-%d", var.nonce, i)
+    description       = format("Force next-hop to BIG-IP %d for server CIDR", i)
+    destination_range = data.google_compute_subnetwork.service.ip_cidr_range
+    # Next hop is nic0 address of BIG-IP VM
+    next_hop_ip = r.address
+  }]
 }
