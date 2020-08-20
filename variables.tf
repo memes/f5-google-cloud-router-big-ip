@@ -47,9 +47,9 @@ EOD
 
 variable "num_bigips" {
   type        = number
-  default     = 1
+  default     = 2
   description = <<EOD
-The number of BIG-IP instances to create. Default is 1.
+The number of BIG-IP instances to create. Default is 2.
 EOD
 }
 

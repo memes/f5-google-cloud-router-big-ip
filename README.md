@@ -77,7 +77,7 @@ VPCs to use BIG-IP as the next-hop gateway.
 | foundations\_tf\_state\_bucket | The name of a GCS bucket containing the Terraform state for foundational resources. | `string` | n/a | yes |
 | foundations\_tf\_state\_prefix | The prefix to the foundational Terraform state files. | `string` | n/a | yes |
 | nonce | A nonce to uniquely identify the resources created. | `string` | n/a | yes |
-| num\_bigips | The number of BIG-IP instances to create. Default is 1. | `number` | `1` | no |
+| num\_bigips | The number of BIG-IP instances to create. Default is 2. | `number` | `2` | no |
 | project\_id | The existing project id that will host the resources. E.g.<br>project\_id = "example-project-id" | `string` | n/a | yes |
 | tf\_sa\_email | The fully-qualified email address of the Terraform service account to use for<br>resource creation. E.g.<br>tf\_sa\_email = "terraform@PROJECT\_ID.iam.gserviceaccount.com" | `string` | n/a | yes |
 | tf\_sa\_token\_lifetime\_secs | The expiration duration for the service account token, in seconds. This value<br>should be high enough to prevent token timeout issues during resource creation,<br>but short enough that the token is useless replayed later. Default value is 1200. | `number` | `1200` | no |

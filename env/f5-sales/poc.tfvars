@@ -5,3 +5,4 @@ nonce       = "emes-poc"
 # The GCS bucket and prefix to retrieve foundations state used in this POC
 foundations_tf_state_bucket = "tf-f5-gcs-4138-sales-cloud-sales"
 foundations_tf_state_prefix = "emes/cloud-router/foundations"
+num_bigips                  = 2
