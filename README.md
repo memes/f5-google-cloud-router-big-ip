@@ -48,6 +48,14 @@ VPCs to use BIG-IP as the next-hop gateway.
    terraform apply -var-file env/ENV/poc.tfvars -auto-approve
    ```
 
+## Testing
+
+1. Open a browser to the public IP address of a `client` VM. The page will show
+   the name of the backend `service` instance, and the *internal* IP address of
+   whichever BIG-IP instance processed the request.
+2. Refresh the page until you see a different BIG-IP address, prooving that GCP
+   is distributing requests to all BIG-IPs.
+
 ## Clean up
 
 1. Destroy resources via Terraform
