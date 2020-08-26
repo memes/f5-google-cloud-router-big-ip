@@ -1,11 +1,11 @@
-# Cloud Router and F5 BIG-IP
+# Custom Routes and F5 BIG-IP
 
 ![pre-commit](https://github.com/memes/f5-google-cloud-router-big-ip/workflows/pre-commit/badge.svg)
 
-This repo links two multiple networks together in an approximation of
+This repo links two networks together in an approximation of
 [Dedicated Interconnect](https://cloud.google.com/network-connectivity/docs/interconnect/concepts/dedicated-overview),
-demonstrating how to use Routes and Cloud Router between
-VPCs to use BIG-IP as the next-hop gateway.
+demonstrating how to use custom routes between VPCs to force use of multiple
+BIG-IP instances as next-hop gateways.
 
 ![HLA](images/f5-google-cloud-router-big-ip.png)
 
@@ -19,7 +19,7 @@ VPCs to use BIG-IP as the next-hop gateway.
    * 3-NIC configuration, with interfaces in `dmz`, `control`, and `service`
    * Virtual Server defined on VIP(s) with **Service instances** as pool members
    * Forwarding rule defined on *external* interface (`dmz`)
-4. `client` and `dmz` networks are connected via **VPC Peering**, with Cloud Router advertising routes
+4. `client` and `dmz` networks are connected via **VPC Peering**, with custom routes advertised
    * *client* is advertising `172.16.0.0/16` to *dmz*
    * *dmz* is advertising `172.18.0.0/16` to *client*
    * *dmz* is advertising custom route `172.17.0.0/16` with **next-hop as BIG-IP VMs**
