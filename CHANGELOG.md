@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.1 - README update
+
+* Remove Cloud Router references; latest implementation does not use it
+
 ## v1.1.0 - VPC peering
 
 * Replace VPN HA pair with VPC Peering
