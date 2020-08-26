@@ -11,7 +11,7 @@ resource "google_compute_firewall" "client_http" {
     "0.0.0.0/0",
   ]
   target_service_accounts = [
-    data.terraform_remote_state.foundations.outputs.client_sa,
+    var.client_sa,
   ]
   allow {
     protocol = "tcp"
@@ -21,7 +21,7 @@ resource "google_compute_firewall" "client_http" {
   }
 }
 
-# Only allow ingress to BIG-IP VIP from client network
+# Only allow ingress to BIG-IP VMs from client network
 resource "google_compute_firewall" "bigip_ingress" {
   project     = var.project_id
   name        = format("%s-allow-client-bigip-ingress", var.nonce)
@@ -32,7 +32,7 @@ resource "google_compute_firewall" "bigip_ingress" {
     data.google_compute_subnetwork.client.ip_cidr_range,
   ]
   target_service_accounts = [
-    data.terraform_remote_state.foundations.outputs.bigip_sa,
+    var.bigip_sa,
   ]
   allow {
     protocol = "tcp"
@@ -50,10 +50,10 @@ resource "google_compute_firewall" "bigip_service" {
   description = format("Allow all from BIG-IP to service (%s)", var.nonce)
   direction   = "INGRESS"
   source_service_accounts = [
-    data.terraform_remote_state.foundations.outputs.bigip_sa,
+    var.bigip_sa,
   ]
   target_service_accounts = [
-    data.terraform_remote_state.foundations.outputs.service_sa,
+    var.service_sa,
   ]
   allow {
     protocol = "all"

@@ -6,13 +6,6 @@ attached to the control-plane subnet.
 EOD
 }
 
-output "bigip_vips" {
-  value       = [local.bigip_vip]
-  description = <<EOD
-The data-plane VIP addresses assigned to BIG-IP.
-EOD
-}
-
 output "client_public_ips" {
   value       = compact(flatten([for vm in google_compute_instance.client : [for ac in vm.network_interface[0].access_config : ac.nat_ip]]))
   description = <<EOD

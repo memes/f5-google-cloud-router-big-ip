@@ -1,46 +1,24 @@
 {
-  "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/v3.18.0/schema/3.18.0/as3-schema.json",
+  "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/v3.20.0/schema/3.20.0/as3-schema.json",
   "class":"AS3",
   "action": "deploy",
   "persist": true,
   "declaration": {
     "class": "ADC",
-    "schemaVersion": "3.18.0",
+    "schemaVersion": "3.20.0",
     "id": "poc",
     "label": "poc",
     "poc": {
       "class": "Tenant",
-      "http": {
+      "forward": {
         "class": "Application",
-        "template": "http",
-        "serviceMain": {
-          "class": "Service_HTTP",
-          "virtualPort": 80,
-          "virtualAddresses": ${jsonencode(vips)},
-          "snat": "auto",
-          "pool": "servers",
-          "profileHTTP": {
-            "bigip": "/Common/http"
-          }
-        },
+        "template": "generic",
         "forward": {
           "class": "Service_Forwarding",
           "forwardingType": "ip",
           "virtualPort": 80,
           "virtualAddresses": ${jsonencode(servers)},
           "snat": "auto"
-        },
-        "servers": {
-          "class": "Pool",
-          "monitors": [
-            "http"
-          ],
-          "members": [
-            {
-              "servicePort": 80,
-              "serverAddresses": ${jsonencode(servers)}
-            }
-          ]
         }
       }
     }

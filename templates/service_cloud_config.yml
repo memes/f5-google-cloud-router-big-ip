@@ -14,6 +14,20 @@ write_files:
       apt install -y nginx
       systemctl daemon-reload
       systemctl restart nginx
+  - path: /etc/nginx/sites-enabled/default
+    permissions: 0644
+    owner: root
+    content: |
+      server {
+        listen 80;
+        root /var/www/html;
+        index index.html;
+        location / {
+          sub_filter '!!BIG-IP!!' $remote_addr;
+          sub_filter_once on;
+          try_files $uri $uri/ =404;
+        }
+      }
   - path: /var/www/html/index.html
     permissions: 0644
     owner: root
@@ -23,7 +37,7 @@ write_files:
           <title>Webapp</title>
         </head>
         <body>
-          <h1>This webapp is running on {{ v1.local_hostname }}.</h1>
+          <h1>This webapp is running on {{ v1.local_hostname }}. via BIG-IP internal IP !!BIG-IP!!</h1>
         </body>
       </html>
 
