@@ -13,42 +13,29 @@ terraform {
 
 # Provider and Terraform service account impersonation is handled in providers.tf
 
-# Retrieve foundations outputs from GCS backend; in TFE/Cloud this would be of
-# type 'remote'.
-data "terraform_remote_state" "foundations" {
-  backend = "gcs"
-  config = {
-    bucket = var.foundations_tf_state_bucket
-    prefix = var.foundations_tf_state_prefix
-  }
-}
-
 # Get details on the client subnet
 data "google_compute_subnetwork" "client" {
-  self_link = data.terraform_remote_state.foundations.outputs.client_subnet
+  self_link = var.client_subnet
 }
 
 # Get details on the service subnet
 data "google_compute_subnetwork" "service" {
-  self_link = data.terraform_remote_state.foundations.outputs.service_subnet
+  self_link = var.service_subnet
 }
 
 # Get details on the control subnet
 data "google_compute_subnetwork" "control" {
-  self_link = data.terraform_remote_state.foundations.outputs.control_subnet
+  self_link = var.control_subnet
 }
 
 # Get details on the DMZ subnet
 data "google_compute_subnetwork" "dmz" {
-  self_link = data.terraform_remote_state.foundations.outputs.dmz_subnet
+  self_link = var.dmz_subnet
 }
 
 locals {
   # For simplicity all resources use a single zone; grok the region from the zone.
   region = replace(var.zone, "/-[a-z]$/", "")
-  # Choose a BIG-IP VIP address, if not provided, as 5th /28 in the DMZ
-  # subnet CIDR allocation
-  bigip_vip = coalesce(var.bigip_vip, cidrsubnet(data.google_compute_subnetwork.dmz.ip_cidr_range, 12, 5))
 }
 
 # Reserve IPs on DMZ subnet for BIG-IP nic0s
@@ -56,99 +43,44 @@ resource "google_compute_address" "bigip" {
   count        = var.num_bigips
   project      = var.project_id
   name         = format("%s-bigip-ext-%d", var.nonce, count.index)
-  subnetwork   = data.google_compute_subnetwork.dmz.self_link
+  subnetwork   = var.dmz_subnet
   address_type = "INTERNAL"
   region       = local.region
 }
 
-# Create a VPN link from client network to DMZ
-module "vpn_client" {
-  source           = "terraform-google-modules/vpn/google//modules/vpn_ha"
-  version          = "~> 1.3.0"
-  project_id       = var.project_id
-  region           = local.region
-  network          = data.google_compute_subnetwork.client.network
-  name             = format("%s-client-to-dmz", var.nonce)
-  peer_gcp_gateway = module.vpn_dmz.self_link
-  router_asn       = 65501
-  tunnels = {
-    remote-0 = {
-      bgp_peer = {
-        address = "169.254.1.1"
-        asn     = 65502
-      }
-      bgp_peer_options                = null
-      bgp_session_range               = "169.254.1.2/30"
-      ike_version                     = 2
-      vpn_gateway_interface           = 0
-      peer_external_gateway_interface = null
-      shared_secret                   = ""
-    }
-    remote-1 = {
-      bgp_peer = {
-        address = "169.254.2.1"
-        asn     = 65502
-      }
-      bgp_peer_options                = null
-      bgp_session_range               = "169.254.2.2/30"
-      ike_version                     = 2
-      vpn_gateway_interface           = 1
-      peer_external_gateway_interface = null
-      shared_secret                   = ""
-    }
-  }
+# Add a route to service subnet with BIG-IP reserved addresses as next hop
+# E.g. if two BIG-IPs are created, two custom routes will be added to the DMZ
+# network with identical metrics; GCP will use ECMP to determine route to use.
+module "routes" {
+  source       = "terraform-google-modules/network/google//modules/routes"
+  version      = "~> 2.0.0"
+  project_id   = var.project_id
+  network_name = data.google_compute_subnetwork.dmz.network
+  routes = [for i, r in google_compute_address.bigip : {
+    name              = format("%s-proxy-bigip-%d", var.nonce, i)
+    description       = format("Force next-hop to BIG-IP %d for server CIDR", i)
+    destination_range = data.google_compute_subnetwork.service.ip_cidr_range
+    # Next hop is nic0 address of BIG-IP VM
+    next_hop_ip = r.address
+  }]
 }
 
-# Create a VPN link from DMZ network to client
-module "vpn_dmz" {
-  source           = "terraform-google-modules/vpn/google//modules/vpn_ha"
-  version          = "~> 1.3.0"
-  project_id       = var.project_id
-  region           = local.region
-  network          = data.google_compute_subnetwork.dmz.network
-  name             = format("%s-dmz-to-client", var.nonce)
-  router_asn       = 65502
-  peer_gcp_gateway = module.vpn_client.self_link
-  # Advertise the service CIDR through VPN
-  router_advertise_config = {
-    mode   = "CUSTOM"
-    groups = ["ALL_SUBNETS"]
-    ip_ranges = {
-      tostring(data.google_compute_subnetwork.service.ip_cidr_range) = format("Service %s", var.nonce)
-    }
-  }
-  tunnels = {
-    remote-0 = {
-      bgp_peer = {
-        address = "169.254.1.2"
-        asn     = 65501
-      }
-      bgp_peer_options                = null
-      bgp_session_range               = "169.254.1.1/30"
-      ike_version                     = 2
-      vpn_gateway_interface           = 0
-      peer_external_gateway_interface = null
-      shared_secret                   = module.vpn_client.random_secret
-    }
-    remote-1 = {
-      bgp_peer = {
-        address = "169.254.2.2"
-        asn     = 65501
-      }
-      bgp_peer_options                = null
-      bgp_session_range               = "169.254.2.1/30"
-      ike_version                     = 2
-      vpn_gateway_interface           = 1
-      peer_external_gateway_interface = null
-      shared_secret                   = module.vpn_client.random_secret
-    }
-  }
+# Create a VPC Peer between client and DMZ networks, advertising the custom
+# route defined above
+module "peer" {
+  source                     = "terraform-google-modules/network/google//modules/network-peering"
+  prefix                     = var.nonce
+  local_network              = data.google_compute_subnetwork.dmz.network
+  peer_network               = data.google_compute_subnetwork.client.network
+  export_local_custom_routes = true
 }
 
 # BIG-IP admin password will be randomised for each run
 resource "random_password" "admin_password" {
   length  = 16
   special = true
+  # Exclude shell-special chars from generated password
+  override_special = "#%&*()-_=+[]:?,."
 }
 
 # Create a slot for BIG-IP admin password in Secret Manager
@@ -166,23 +98,21 @@ resource "google_secret_manager_secret_version" "admin_password" {
   secret_data = random_password.admin_password.result
 }
 
-# Allow the supplied accounts to read the BIG-IP password from Secret Manager
+# Allow the BIG-IP service account to read admin password from Secret Manager
 resource "google_secret_manager_secret_iam_member" "admin_password" {
-  for_each = toset(formatlist("serviceAccount:%s", [
-    data.terraform_remote_state.foundations.outputs.bigip_sa,
-  ]))
   project   = var.project_id
   secret_id = google_secret_manager_secret.admin_password.secret_id
   role      = "roles/secretmanager.secretAccessor"
-  member    = each.value
+  member    = format("serviceAccount:%s", var.bigip_sa)
 }
 
+# Launch BIG-IP as standalone instances
 module "bigip" {
-  source                 = "git::https://github.com/memes/f5-google-terraform-modules//modules/big-ip/instance?ref=1.0.1"
+  source                 = "git::https://github.com/memes/f5-google-terraform-modules//modules/big-ip/instance?ref=1.0.2"
   project_id             = var.project_id
   num_instances          = var.num_bigips
   instance_name_template = format("%s-bigip-%%02d", var.nonce)
-  service_account        = data.terraform_remote_state.foundations.outputs.bigip_sa
+  service_account        = var.bigip_sa
   image                  = var.bigip_image
   zone                   = var.zone
   # Egress NAT is on control-plane - make sure BIG-IP uses the control-plane
@@ -192,28 +122,23 @@ module "bigip" {
   # use for Admin account
   admin_password_secret_manager_key = google_secret_manager_secret.admin_password.secret_id
   # Assign external (nic0) to the DMZ subnet; use an emphemeral IP address
-  external_subnetwork = data.google_compute_subnetwork.dmz.self_link
+  external_subnetwork = var.dmz_subnet
   # Use the reserved IPs for nic0s
   external_subnetwork_network_ips = [for ip in google_compute_address.bigip : ip.address]
-  # Define the VIP that will be used
-  external_subnetwork_vip_cidrs = [[local.bigip_vip]]
   # Don't need a public IP on external network
   provision_external_public_ip = false
   # Assign management (nic1) to the control-plane subnet; use an emphemeral IP address
-  management_subnetwork = data.google_compute_subnetwork.control.self_link
+  management_subnetwork = var.control_subnet
   # Don't need a public IP on management network
   provision_management_public_ip = false
   # Assign internal (nic2) to services subnet; use an emphemeral IP address
-  internal_subnetworks = [data.google_compute_subnetwork.service.self_link]
+  internal_subnetworks = [var.service_subnet]
   # Don't need a public IP on internal network
   provision_internal_public_ip = false
-  # Define an app to proxy to services
-  as3_payloads = [base64gzip(templatefile("${path.module}/templates/as3.json", {
-    vips    = [local.bigip_vip],
-    servers = [for vm in google_compute_instance.service : vm.network_interface[0].network_ip],
+  # Define an AS3 configuration for each BIG-IP; the declarations are the identical
+  as3_payloads = [for i in range(0, var.num_bigips) : base64gzip(templatefile("${path.module}/templates/as3.json", {
+    servers = [for vm in google_compute_instance.service : vm.network_interface[0].network_ip]
   }))]
-  # BIG-IP v15.1? Cloud-init? Yes,please
-  use_cloud_init = true
 }
 
 # Launch VMs to represent services behind BIG-IP
@@ -233,7 +158,7 @@ resource "google_compute_instance" "service" {
 
   machine_type = "n1-standard-1"
   service_account {
-    email = data.terraform_remote_state.foundations.outputs.service_sa
+    email = var.service_sa
     scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]
@@ -248,14 +173,12 @@ resource "google_compute_instance" "service" {
 
   # Attach nic0 to service network without a public IP
   network_interface {
-    subnetwork         = data.google_compute_subnetwork.service.name
-    subnetwork_project = data.google_compute_subnetwork.service.project
+    subnetwork = var.service_subnet
   }
 
   # Attach nic1 to control network without a public IP
   network_interface {
-    subnetwork         = data.google_compute_subnetwork.control.name
-    subnetwork_project = data.google_compute_subnetwork.control.project
+    subnetwork = var.control_subnet
   }
 
   lifecycle {
@@ -281,7 +204,7 @@ resource "google_compute_instance" "client" {
 
   machine_type = "n1-standard-1"
   service_account {
-    email = data.terraform_remote_state.foundations.outputs.client_sa
+    email = var.client_sa
     scopes = [
       "https://www.googleapis.com/auth/cloud-platform",
     ]
@@ -296,27 +219,11 @@ resource "google_compute_instance" "client" {
 
   # Attach nic0 to client network with a public IP for testing
   network_interface {
-    subnetwork         = data.google_compute_subnetwork.client.name
-    subnetwork_project = data.google_compute_subnetwork.client.project
+    subnetwork = var.client_subnet
     access_config {}
   }
 
   lifecycle {
     create_before_destroy = false
   }
-}
-
-# Add a route to service subnet with BIG-IP as next hop
-module "vpc" {
-  source       = "terraform-google-modules/network/google//modules/routes"
-  version      = "~> 2.0.0"
-  project_id   = var.project_id
-  network_name = data.google_compute_subnetwork.dmz.network
-  routes = [for i, r in google_compute_address.bigip : {
-    name              = format("%s-proxy-bigip-%d", var.nonce, i)
-    description       = format("Force next-hop to BIG-IP %d for server CIDR", i)
-    destination_range = data.google_compute_subnetwork.service.ip_cidr_range
-    # Next hop is nic0 address of BIG-IP VM
-    next_hop_ip = r.address
-  }]
 }

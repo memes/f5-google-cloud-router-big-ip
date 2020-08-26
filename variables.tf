@@ -27,21 +27,9 @@ EOD
 
 variable "nonce" {
   type        = string
+  default     = "cloud-route-poc"
   description = <<EOD
 A nonce to uniquely identify the resources created.
-EOD
-}
-variable "foundations_tf_state_bucket" {
-  type        = string
-  description = <<EOD
-The name of a GCS bucket containing the Terraform state for foundational resources.
-EOD
-}
-
-variable "foundations_tf_state_prefix" {
-  type        = string
-  description = <<EOD
-The prefix to the foundational Terraform state files.
 EOD
 }
 
@@ -50,6 +38,13 @@ variable "num_bigips" {
   default     = 2
   description = <<EOD
 The number of BIG-IP instances to create. Default is 2.
+EOD
+}
+
+variable "bigip_sa" {
+  type        = string
+  description = <<EOD
+The fully-qualified email address of BIG-IP service account.
 EOD
 }
 
@@ -69,11 +64,63 @@ The zone to use for BIG-IP and other resources. Default is 'us-central1-f'.
 EOD
 }
 
-variable "bigip_vip" {
+variable "client_sa" {
   type        = string
-  default     = ""
   description = <<EOD
-The IP address to set as the BIG-IP VIP. If left blank (default), a value will
-be chosen from the `dmz_cidr` block.
+The fully-qualified email address of client VMs service account.
+EOD
+}
+
+variable "service_sa" {
+  type        = string
+  description = <<EOD
+The fully-qualified email address of service VMs service account.
+EOD
+}
+
+variable "client_subnet" {
+  type        = string
+  description = <<EOD
+A self-link for the client subnet that will host client VMs that will
+communicate with service VMs through BIG-IP as an advertised next-hop.
+EOD
+}
+
+variable "dmz_subnet" {
+  type        = string
+  description = <<EOD
+A self-link for the DMZ subnet that will host BIG-IP external interface.
+EOD
+}
+
+variable "control_subnet" {
+  type        = string
+  description = <<EOD
+A self-link for the control subnet that will host BIG-IP, client, and service
+management interfaces.
+EOD
+}
+
+variable "service_subnet" {
+  type        = string
+  description = <<EOD
+A self-link for the service subnet that will host BIG-IP internal interface, and
+service VMs.
+EOD
+}
+
+variable "num_clients" {
+  type        = number
+  default     = 1
+  description = <<EOD
+The number of client instances to create. Default is 1.
+EOD
+}
+
+variable "num_services" {
+  type        = number
+  default     = 2
+  description = <<EOD
+The number of service instances to create. Default is 2.
 EOD
 }
