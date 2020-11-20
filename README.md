@@ -72,7 +72,7 @@ BIG-IP instances as next-hop gateways.
 
 | Name | Version |
 |------|---------|
-| terraform | ~> 0.12 |
+| terraform | ~> 0.12, < 0.13 |
 | google | ~> 3.34 |
 | google | ~> 3.34 |
 

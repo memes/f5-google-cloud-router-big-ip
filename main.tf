@@ -5,7 +5,7 @@
 # credenitals" indicates that the calling user must (re-)authenticate application
 # default credentials using `gcloud auth application-default login`.
 terraform {
-  required_version = "~> 0.12"
+  required_version = "~> 0.12, < 0.13"
   # The location and path for GCS state storage must be specified in an environment
   # file(s) via `-backend-config env/NAME/base.config`
   backend "gcs" {}
@@ -108,13 +108,14 @@ resource "google_secret_manager_secret_iam_member" "admin_password" {
 
 # Launch BIG-IP as standalone instances
 module "bigip" {
-  source                 = "git::https://github.com/memes/f5-google-terraform-modules//modules/big-ip/instance?ref=1.0.2"
+  source                 = "memes/f5-bigip/google"
+  version                = "1.3.1"
   project_id             = var.project_id
   num_instances          = var.num_bigips
   instance_name_template = format("%s-bigip-%%02d", var.nonce)
   service_account        = var.bigip_sa
   image                  = var.bigip_image
-  zone                   = var.zone
+  zones                  = [var.zone]
   # Egress NAT is on control-plane - make sure BIG-IP uses the control-plane
   # subnet gateway for onboarding
   default_gateway = "$MGMT_GATEWAY"
